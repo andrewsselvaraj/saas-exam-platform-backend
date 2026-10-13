@@ -1,0 +1,31 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          # Routes are matched in order: the question paths nested under subjects and chapters must come before
+          # the catalog's catch-all for those prefixes. /internal/** is deliberately not routed.
+          routes:
+            - id: question-service
+              uri: ${QUESTION_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/subjects/*/questions/**,/api/chapters/*/questions/**,/api/questions/**,/api/answers/**
+            - id: exam-service
+              uri: ${EXAM_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/exams/**
+            - id: catalog-service
+              uri: ${CATALOG_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/orgs/**,/api/classes/**,/api/subjects/**,/api/chapters/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

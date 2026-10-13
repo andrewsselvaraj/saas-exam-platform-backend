@@ -1,0 +1,37 @@
+server:
+  port: ${PORT:8083}
+
+spring:
+  application:
+    name: exam-service
+  datasource:
+    # File-based H2 so data survives restarts. Delete ./data/examdb* to reset to the seed data.
+    url: ${DB_URL:jdbc:h2:file:./data/examdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE}
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    locations: classpath:db/migration
+
+services:
+  catalog:
+    url: ${CATALOG_SERVICE_URL:http://localhost:8081}
+  question:
+    url: ${QUESTION_SERVICE_URL:http://localhost:8082}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,0 +1,35 @@
+# Runs the whole platform. Build the jars first: ./mvnw -DskipTests package
+# Clients use the gateway on http://localhost:8080; the services are not published.
+services:
+  catalog-service:
+    build: { context: ., args: { SERVICE: catalog-service } }
+    environment:
+      QUESTION_SERVICE_URL: http://question-service:8082
+    volumes: [ "catalog-data:/app/data" ]
+
+  question-service:
+    build: { context: ., args: { SERVICE: question-service } }
+    environment:
+      CATALOG_SERVICE_URL: http://catalog-service:8081
+    volumes: [ "question-data:/app/data" ]
+
+  exam-service:
+    build: { context: ., args: { SERVICE: exam-service } }
+    environment:
+      CATALOG_SERVICE_URL: http://catalog-service:8081
+      QUESTION_SERVICE_URL: http://question-service:8082
+    volumes: [ "exam-data:/app/data" ]
+
+  api-gateway:
+    build: { context: ., args: { SERVICE: api-gateway } }
+    environment:
+      CATALOG_SERVICE_URL: http://catalog-service:8081
+      QUESTION_SERVICE_URL: http://question-service:8082
+      EXAM_SERVICE_URL: http://exam-service:8083
+    ports: [ "8080:8080" ]
+    depends_on: [ catalog-service, question-service, exam-service ]
+
+volumes:
+  catalog-data:
+  question-data:
+  exam-data:

@@ -3,3 +3,4 @@ data/
 *.iml
 .idea/
 .vscode/
+target-e2e-*.log

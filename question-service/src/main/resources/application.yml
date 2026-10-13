@@ -1,0 +1,35 @@
+server:
+  port: ${PORT:8082}
+
+spring:
+  application:
+    name: question-service
+  datasource:
+    # File-based H2 so data survives restarts. Delete ./data/questiondb* to reset to the seed data.
+    url: ${DB_URL:jdbc:h2:file:./data/questiondb;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE}
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    locations: classpath:db/migration
+
+services:
+  catalog:
+    url: ${CATALOG_SERVICE_URL:http://localhost:8081}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

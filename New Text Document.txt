@@ -1,0 +1,4 @@
+F:\andrew\git\saas-exam-platform-backend create spring boot project here based on sql available in F:\andrew\git\saas-exam-platform-backend\sql folder
+Backend h2 database
+pls ignore user module
+consider  hierarchy (school/org → class → subject → chapter → question → answer)

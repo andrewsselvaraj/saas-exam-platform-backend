@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 
 /** A question within a subject, optionally filed under one of the subject's chapters. */
 @Entity
-@Table(name = "question_info")
+@Table(name = "question_info_v_two")
 public class Question {
 
     @Id

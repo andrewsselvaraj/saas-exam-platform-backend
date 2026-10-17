@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 
 /** One answer option of a question. A question may have several correct options. */
 @Entity
-@Table(name = "answer_info")
+@Table(name = "answer_info_v_two")
 public class Answer {
 
     static final String CORRECT = "Yes";

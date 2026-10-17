@@ -20,15 +20,15 @@ public class SoftDeleter {
 
     /** Deletes one question and its answers. */
     public void deleteQuestion(String questionId) {
-        update("question_info", "question_status", "pk_question_id", questionId);
-        update("answer_info", "answer_status", "fk_question_id", questionId);
+        update("question_info_v_two", "question_status", "pk_question_id", questionId);
+        update("answer_info_v_two", "answer_status", "fk_question_id", questionId);
     }
 
     /** Deletes every question and answer filed under a catalog node that was deleted. */
     public void deleteBelow(HierarchyLevel level, String id) {
         String column = "fk_" + level.column() + "_id";
-        update("question_info", "question_status", column, id);
-        update("answer_info", "answer_status", column, id);
+        update("question_info_v_two", "question_status", column, id);
+        update("answer_info_v_two", "answer_status", column, id);
     }
 
     private void update(String table, String statusColumn, String idColumn, String id) {

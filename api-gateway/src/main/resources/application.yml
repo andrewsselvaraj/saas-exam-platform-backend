@@ -29,3 +29,10 @@ management:
     web:
       exposure:
         include: health,info,gateway
+  endpoint:
+    health:
+      # Show each component (db, diskSpace, ...) and its details, not just the overall status.
+      show-details: always
+      # /actuator/health/liveness and /actuator/health/readiness for the OpenShift probes.
+      probes:
+        enabled: true

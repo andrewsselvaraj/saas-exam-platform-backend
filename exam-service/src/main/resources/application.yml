@@ -35,3 +35,14 @@ management:
     web:
       exposure:
         include: health,info
+  endpoint:
+    health:
+      # Show each component (db, diskSpace, ...) and its details, not just the overall status.
+      show-details: always
+      # /actuator/health/liveness and /actuator/health/readiness for the OpenShift probes.
+      probes:
+        enabled: true
+      group:
+        # Not ready while the database is unreachable, so OpenShift stops sending traffic instead of restarting.
+        readiness:
+          include: readinessState,db

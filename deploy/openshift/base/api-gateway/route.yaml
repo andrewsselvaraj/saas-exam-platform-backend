@@ -1,0 +1,15 @@
+# The only public endpoint: clients reach every service through the gateway.
+# Leave spec.host empty to get api-gateway-<namespace>.apps.<cluster-domain>.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: api-gateway
+spec:
+  to:
+    kind: Service
+    name: api-gateway
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

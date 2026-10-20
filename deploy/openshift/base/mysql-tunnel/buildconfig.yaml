@@ -1,0 +1,45 @@
+# Builds the SSH tunnel image: UBI 9 minimal + openssh-clients + an entrypoint that forwards
+# 127.0.0.1:3306 in the pod to MySQL on the database server, over SSH (port 22).
+# Rebuild with: oc start-build mysql-tunnel --follow
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: mysql-tunnel
+spec:
+  runPolicy: Serial
+  source:
+    type: Dockerfile
+    dockerfile: |
+      FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
+      RUN microdnf install -y openssh-clients && microdnf clean all \
+       && chmod g=u /etc/passwd \
+       && printf '%s\n' \
+          '#!/bin/bash' \
+          'set -euo pipefail' \
+          '# ssh needs a passwd entry for the arbitrary OpenShift UID.' \
+          'whoami >/dev/null 2>&1 || echo "tunnel:x:$(id -u):0::/tmp:/sbin/nologin" >> /etc/passwd' \
+          '# ssh refuses group-readable keys; the mounted Secret is 0440, so copy it.' \
+          'install -m 600 /etc/tunnel/id_ed25519 /tmp/id_ed25519' \
+          'exec ssh -N -i /tmp/id_ed25519 \' \
+          '  -o IdentitiesOnly=yes -o BatchMode=yes \' \
+          '  -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/etc/tunnel/known_hosts \' \
+          '  -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \' \
+          '  -L "127.0.0.1:${LOCAL_PORT:-3306}:127.0.0.1:${REMOTE_PORT:-3306}" \' \
+          '  -p "${SSH_PORT:-22}" "${SSH_USER}@${SSH_HOST}"' \
+          > /usr/local/bin/mysql-tunnel \
+       && chmod 755 /usr/local/bin/mysql-tunnel
+      USER 1001
+      ENTRYPOINT ["/usr/local/bin/mysql-tunnel"]
+  strategy:
+    type: Docker
+    dockerStrategy: {}
+  output:
+    to:
+      kind: ImageStreamTag
+      name: mysql-tunnel:latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi

@@ -1,0 +1,38 @@
+# Builds question-service from the backend's multi-module Maven repo with the Red Hat OpenJDK 17 S2I builder.
+# -pl/-am builds only this module and what it depends on (common-lib); ARTIFACT_DIR tells the
+# builder which jar to copy to /deployments. Start a build with: oc start-build question-service --follow
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: question-service
+spec:
+  runPolicy: Serial
+  source:
+    type: Git
+    git:
+      uri: https://github.com/andrewsselvaraj/saas-exam-platform-backend.git
+      ref: main
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: DockerImage
+        name: registry.access.redhat.com/ubi9/openjdk-17:1.21
+      env:
+        - name: MAVEN_ARGS
+          value: "-B package -DskipTests -pl question-service -am"
+        # UBI 9 OpenJDK builders read MAVEN_S2I_ARTIFACT_DIRS; ARTIFACT_DIR is only for older images.
+        - name: MAVEN_S2I_ARTIFACT_DIRS
+          value: question-service/target
+        - name: ARTIFACT_DIR
+          value: question-service/target
+  output:
+    to:
+      kind: ImageStreamTag
+      name: question-service:latest
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      memory: 2Gi

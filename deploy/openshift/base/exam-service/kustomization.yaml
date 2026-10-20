@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# The MySQL login (saas-exam-mysql) is not listed on purpose: credentials never land in git.
+resources:
+  - imagestream.yaml
+  - buildconfig.yaml
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: exam-service

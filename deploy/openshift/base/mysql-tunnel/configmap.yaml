@@ -1,0 +1,12 @@
+# Where the tunnel sidecars connect: the MySQL server's SSH login.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-tunnel-config
+data:
+  SSH_HOST: "63.142.240.31"
+  SSH_PORT: "22"
+  SSH_USER: "ocp-tunnel"
+  # 127.0.0.1:LOCAL_PORT in the pod is forwarded to 127.0.0.1:REMOTE_PORT on the server.
+  LOCAL_PORT: "3306"
+  REMOTE_PORT: "3306"

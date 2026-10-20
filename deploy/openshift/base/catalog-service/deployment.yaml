@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service
+  labels:
+    app.kubernetes.io/component: backend
+  annotations:
+    # Roll out automatically whenever a build pushes a new catalog-service:latest.
+    image.openshift.io/triggers: >-
+      [{"from":{"kind":"ImageStreamTag","name":"catalog-service:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"catalog-service\")].image"}]
+spec:
+  # Keep 2 old ReplicaSets for rollback; the Developer Sandbox allows 30 per project.
+  revisionHistoryLimit: 2
+  # Stateless: the data lives in the MySQL database, so it can roll without downtime.
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: catalog-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: catalog-service
+        app.kubernetes.io/component: backend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # Sidecar (restartPolicy: Always): starts before the app and stays up. Forwards 127.0.0.1:3306
+        # in this pod to MySQL on the database server over SSH, so MySQL needs no public port.
+        - name: mysql-tunnel
+          image: mysql-tunnel:latest
+          imagePullPolicy: Always
+          restartPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: mysql-tunnel-config
+          # The app only starts once the tunnel accepts connections.
+          startupProbe:
+            exec:
+              command: ["bash", "-c", "echo > /dev/tcp/127.0.0.1/3306"]
+            periodSeconds: 3
+            failureThreshold: 40
+          livenessProbe:
+            exec:
+              command: ["bash", "-c", "echo > /dev/tcp/127.0.0.1/3306"]
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tunnel-key
+              mountPath: /etc/tunnel
+              readOnly: true
+      containers:
+        - name: catalog-service
+          image: catalog-service:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: catalog-service-config
+            # MySQL login shared by the data services (see ../secret.example.yaml).
+            - secretRef:
+                name: saas-exam-mysql
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          # Spring Boot exposes these health groups automatically when it runs on Kubernetes.
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 10
+            failureThreshold: 18
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        # SSH private key + pinned server host key (see ../mysql-tunnel/secret.example.yaml).
+        - name: tunnel-key
+          secret:
+            secretName: mysql-ssh-tunnel
+            defaultMode: 0440
+      terminationGracePeriodSeconds: 45

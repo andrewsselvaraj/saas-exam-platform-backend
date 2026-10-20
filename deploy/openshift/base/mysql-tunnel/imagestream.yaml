@@ -1,0 +1,9 @@
+# Small SSH client image used as the tunnel sidecar of the data services.
+# lookupPolicy.local lets Deployments in this project refer to it as plain "mysql-tunnel:latest".
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: mysql-tunnel
+spec:
+  lookupPolicy:
+    local: true

@@ -58,6 +58,12 @@ Each service keeps its database in `./data` of its working directory; delete it 
 - `scripts/e2e-test.sh` (needs `curl` and `jq`, after `./mvnw -DskipTests package`) starts all four services on
   in-memory databases and runs the full lifecycle through the gateway.
 
+## Deploy
+
+The OpenShift manifests, the image Dockerfile and the deploy scripts live in [`deploy/`](deploy/) and
+[`scripts/`](scripts/). See [deploy/README.md](deploy/README.md); after `oc login`, `./scripts/deploy-backend.sh` deploys
+all four services and prints the public API URL.
+
 ## Database
 
 Built from the legacy MySQL dump in `sql/m2itssql_complete.sql`. Each service has:

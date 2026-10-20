@@ -1,0 +1,14 @@
+# Where the gateway forwards /api/** (in-cluster Service names). /internal/** is never routed.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+data:
+  PORT: "8080"
+  CATALOG_SERVICE_URL: "http://catalog-service:8081"
+  QUESTION_SERVICE_URL: "http://question-service:8082"
+  EXAM_SERVICE_URL: "http://exam-service:8083"
+  SERVER_SHUTDOWN: "graceful"
+  # Turns on /actuator/health/liveness and /readiness used by the probes.
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+  JAVA_MAX_RAM_RATIO: "75"
